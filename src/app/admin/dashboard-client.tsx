@@ -176,13 +176,18 @@ export default function DashboardClient() {
             />
           </div>
 
-          <Card>
+          <Card className="min-w-0 overflow-hidden">
             <CardHeader>
               <CardTitle>Daily sales</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-72 w-full min-w-0">
+                <ResponsiveContainer
+                  width="100%"
+                  height="100%"
+                  debounce={50}
+                  initialDimension={{ width: 800, height: 288 }}
+                >
                   <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="sales" x1="0" y1="0" x2="0" y2="1">
@@ -235,7 +240,7 @@ export default function DashboardClient() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-0 overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between gap-4">
               <CardTitle>
                 All items by {itemSort === "value" ? "value" : "units"}
@@ -279,10 +284,18 @@ export default function DashboardClient() {
             <CardContent>
               {itemsView === "bar" ? (
                 <div
-                  className="w-full"
+                  className="w-full min-w-0"
                   style={{ height: Math.max(240, sortedItems.length * 28) }}
                 >
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    debounce={50}
+                    initialDimension={{
+                      width: 800,
+                      height: Math.max(240, sortedItems.length * 28),
+                    }}
+                  >
                     <BarChart
                       data={sortedItems}
                       layout="vertical"
@@ -325,8 +338,13 @@ export default function DashboardClient() {
                   </ResponsiveContainer>
                 </div>
               ) : itemLineData.length > 0 ? (
-                <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-80 w-full min-w-0">
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    debounce={50}
+                    initialDimension={{ width: 800, height: 320 }}
+                  >
                     <LineChart
                       data={itemLineData}
                       margin={{ left: 8, right: 16 }}
@@ -385,8 +403,8 @@ export default function DashboardClient() {
             </CardContent>
           </Card>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
+          <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+            <Card className="min-w-0 overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Top items</CardTitle>
                 <div className="flex gap-1">
@@ -469,7 +487,7 @@ export default function DashboardClient() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="min-w-0 overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Waiters</CardTitle>
                 <div className="flex gap-1">
