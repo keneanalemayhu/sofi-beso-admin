@@ -1,0 +1,4 @@
+admin-local.sofi-beso.et {
+	reverse_proxy 127.0.0.1:3001
+	tls internal
+}
