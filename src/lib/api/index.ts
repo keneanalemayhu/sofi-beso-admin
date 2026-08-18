@@ -1,8 +1,10 @@
 // @/lib/api/index.ts
 
+export * from "./wages"
+export * from "./staff"
 export * from "./items"
 export * from "./client"
 export * from "./orders"
-export * from "./waiters"
+export * from "./expenses"
 export * from "./analytics"
 export * from "./categories"

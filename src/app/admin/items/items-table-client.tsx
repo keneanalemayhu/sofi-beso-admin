@@ -9,6 +9,21 @@ import { Button } from "@/components/ui/button"
 import { getMenuItems, getCategories } from "@/lib/api"
 import type { MenuItem, Category } from "@/types"
 import { ItemFormDialog } from "./item-form-dialog"
+import { ExportCsvDialog } from "@/components/export-csv-dialog"
+import type { CsvColumn } from "@/lib/csv"
+
+const ITEM_CSV_COLUMNS: CsvColumn<MenuItem>[] = [
+  { key: "name", label: "Item", value: (i) => i.name },
+  { key: "category", label: "Category", value: (i) => i.category_name },
+  { key: "price", label: "Price (ETB)", value: (i) => Number(i.price).toFixed(2) },
+  { key: "status", label: "Status", value: (i) => (i.is_active ? "Active" : "Inactive") },
+  {
+    key: "created_at",
+    label: "Created",
+    value: (i) => (i.created_at ? i.created_at.slice(0, 10) : ""),
+  },
+  { key: "id", label: "ID", value: (i) => i.id },
+]
 
 export default function ItemsTableClient() {
   const [items, setItems] = useState<MenuItem[]>([])
@@ -73,10 +88,19 @@ export default function ItemsTableClient() {
           <span className="font-medium text-foreground">{items.length}</span>
         </div>
 
-        <Button onClick={() => setOpenCreate(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add item
-        </Button>
+        <div className="flex items-center gap-2">
+          <ExportCsvDialog
+            rows={items}
+            columns={ITEM_CSV_COLUMNS}
+            filenameBase="menu-items"
+            defaultKeys={["name", "category", "price", "status"]}
+          />
+
+          <Button onClick={() => setOpenCreate(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add item
+          </Button>
+        </div>
       </div>
 
       <DataTable

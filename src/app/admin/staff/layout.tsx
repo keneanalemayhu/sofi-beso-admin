@@ -1,14 +1,14 @@
-// @/app/admin/waiters/layout.tsx
+// @/app/admin/staff/layout.tsx
 
 import * as React from "react"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Waiters | Sofi Beso Admin",
+  title: "Staff | Sofi Beso Admin",
   description: "Sofi Beso management system by Jirehgrp.",
 }
 
-export default function WaitersLayout({
+export default function StaffLayout({
   children,
 }: {
   children: React.ReactNode

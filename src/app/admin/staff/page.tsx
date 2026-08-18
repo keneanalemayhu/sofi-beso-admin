@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import WaitersTableClient from "./waiters-table-client"
+import StuffTableClient from "./staff-client"
 
 export default function Page() {
   return (
@@ -33,7 +33,7 @@ export default function Page() {
                     </p>
                   </div>
 
-                  <WaitersTableClient />
+                  <StuffTableClient />
                 </div>
               </div>
             </div>

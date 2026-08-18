@@ -1,8 +1,8 @@
 // @/app/providers.tsx
 
 "use client"
-
 import { ThemeProvider } from "next-themes"
+import { CalendarProvider } from "@/contexts/calendar-context"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +12,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      {children}
+      <CalendarProvider>{children}</CalendarProvider>
     </ThemeProvider>
   )
 }

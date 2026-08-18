@@ -21,6 +21,8 @@ import {
   FolderTree,
   ReceiptText,
   Users,
+  Wallet,
+  PiggyBank,
 } from "lucide-react"
 import { IconSquareLetterS } from "@tabler/icons-react"
 
@@ -60,9 +62,24 @@ const data = {
           icon: <ReceiptText />,
         },
         {
-          title: "Waiters",
-          url: "/admin/waiters",
+          title: "Staff",
+          url: "/admin/staff",
           icon: <Users />,
+        },
+      ],
+    },
+    {
+      title: "Finance",
+      items: [
+        {
+          title: "Expenses",
+          url: "/admin/expenses",
+          icon: <Wallet />,
+        },
+        {
+          title: "Savings",
+          url: "/admin/savings",
+          icon: <PiggyBank />,
         },
       ],
     },
