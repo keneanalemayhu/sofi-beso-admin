@@ -1,4 +1,4 @@
-// @/components/table/columns/waiter-column.tsx
+// @/components/table/columns/Staff-column.tsx
 
 "use client"
 import { useState } from "react"
@@ -33,23 +33,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { updateWaiter, toggleWaiter, deleteWaiter } from "@/lib/api"
-import type { Waiter } from "@/types"
+import { updateStaff, toggleStaff, deleteStaff } from "@/lib/api"
+import type { Staff } from "@/types"
 
-type WaiterColumnsProps = {
+type StaffColumnsProps = {
   onChanged: () => void
 }
 
-function WaiterActions({
-  waiter,
+function StaffActions({
+  Staff,
   onChanged,
 }: {
-  waiter: Waiter
+  Staff: Staff
   onChanged: () => void
 }) {
   const [openEdit, setOpenEdit] = useState(false)
   const [openDelete, setOpenDelete] = useState(false)
-  const [name, setName] = useState(waiter.name)
+  const [name, setName] = useState(Staff.name)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [toggling, setToggling] = useState(false)
@@ -57,17 +57,17 @@ function WaiterActions({
   async function handleEdit() {
     const trimmed = name.trim()
     if (!trimmed) {
-      toast.error("Waiter name is required")
+      toast.error("Staff name is required")
       return
     }
     try {
       setSaving(true)
-      await updateWaiter(waiter.id, { name: trimmed })
-      toast.success("Waiter updated")
+      await updateStaff(Staff.id, { name: trimmed })
+      toast.success("Staff updated")
       setOpenEdit(false)
       onChanged()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update waiter")
+      toast.error(err instanceof Error ? err.message : "Failed to update Staff")
     } finally {
       setSaving(false)
     }
@@ -76,11 +76,11 @@ function WaiterActions({
   async function handleToggle() {
     try {
       setToggling(true)
-      await toggleWaiter(waiter.id)
-      toast.success(waiter.is_active ? "Waiter deactivated" : "Waiter activated")
+      await toggleStaff(Staff.id)
+      toast.success(Staff.is_active ? "Staff deactivated" : "Staff activated")
       onChanged()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to toggle waiter")
+      toast.error(err instanceof Error ? err.message : "Failed to toggle Staff")
     } finally {
       setToggling(false)
     }
@@ -89,12 +89,12 @@ function WaiterActions({
   async function handleDelete() {
     try {
       setDeleting(true)
-      await deleteWaiter(waiter.id)
-      toast.success("Waiter deleted")
+      await deleteStaff(Staff.id)
+      toast.success("Staff deleted")
       setOpenDelete(false)
       onChanged()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete waiter")
+      toast.error(err instanceof Error ? err.message : "Failed to delete Staff")
     } finally {
       setDeleting(false)
     }
@@ -112,7 +112,7 @@ function WaiterActions({
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={() => {
-              setName(waiter.name)
+              setName(Staff.name)
               setOpenEdit(true)
             }}
           >
@@ -120,7 +120,7 @@ function WaiterActions({
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={handleToggle} disabled={toggling}>
-            {waiter.is_active ? "Deactivate" : "Activate"}
+            {Staff.is_active ? "Deactivate" : "Activate"}
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -135,14 +135,14 @@ function WaiterActions({
       <Dialog open={openEdit} onOpenChange={setOpenEdit}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit waiter</DialogTitle>
-            <DialogDescription>Rename this waiter.</DialogDescription>
+            <DialogTitle>Edit Staff</DialogTitle>
+            <DialogDescription>Rename this Staff.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2 py-2">
-            <Label htmlFor="edit-waiter-name">Name</Label>
+            <Label htmlFor="edit-Staff-name">Name</Label>
             <Input
-              id="edit-waiter-name"
+              id="edit-Staff-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => {
@@ -169,9 +169,9 @@ function WaiterActions({
       <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete waiter?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Staff?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete &quot;{waiter.name}&quot;. If they
+              This will permanently delete &quot;{Staff.name}&quot;. If they
               have past orders, deletion is blocked — deactivate instead.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -192,13 +192,13 @@ function WaiterActions({
   )
 }
 
-export function waitersColumns({
+export function StaffsColumns({
   onChanged,
-}: WaiterColumnsProps): ColumnDef<Waiter>[] {
+}: StaffColumnsProps): ColumnDef<Staff>[] {
   return [
     {
       accessorKey: "name",
-      header: "Waiter",
+      header: "Staff",
       cell: ({ row }) => (
         <span className="font-medium">{row.original.name}</span>
       ),
@@ -217,7 +217,7 @@ export function waitersColumns({
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => (
-        <WaiterActions waiter={row.original} onChanged={onChanged} />
+        <StaffActions Staff={row.original} onChanged={onChanged} />
       ),
     },
   ]
