@@ -30,8 +30,11 @@ import {
 import { useCalendar } from "@/hooks/useCalendar";
 import { getOverview } from "@/lib/api";
 import type { Overview, ItemStat, WaiterStat } from "@/types";
+import { CalendarDays } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const PERIODS = [
+  { label: "Today", value: 1 },
   { label: "7 days", value: 7 },
   { label: "30 days", value: 30 },
   { label: "90 days", value: 90 },
@@ -69,10 +72,24 @@ const LINE_COLORS = [
   "#ef4444",
 ];
 
+function addisToday() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Addis_Ababa",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const part = (type: string) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
 export default function DashboardClient() {
   const router = useRouter();
   const { toEthiopian } = useCalendar();
-  const [period, setPeriod] = useState(7);
+  const [period, setPeriod] = useState(1);
   const [data, setData] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,10 +97,11 @@ export default function DashboardClient() {
   const [waiterSort, setWaiterSort] = useState<WaiterSort>("value");
   const [itemsExpanded, setItemsExpanded] = useState(false);
   const [itemsView, setItemsView] = useState<ItemsView>("bar");
+  const [selectedDate, setSelectedDate] = useState(addisToday);
 
   useEffect(() => {
     let active = true;
-    getOverview(period)
+    getOverview(period, selectedDate)
       .then((d) => {
         if (active) {
           setData(d);
@@ -102,7 +120,7 @@ export default function DashboardClient() {
     return () => {
       active = false;
     };
-  }, [period]);
+  }, [period, selectedDate]);
 
   const chartData =
     data?.series.map((p) => ({
@@ -135,30 +153,60 @@ export default function DashboardClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2">
-        {PERIODS.map((p) => (
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {PERIODS.map((p) => (
+            <Button
+              key={p.value}
+              variant={period === p.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                if (p.value !== period) {
+                  setLoading(true);
+                  setPeriod(p.value);
+                }
+              }}
+            >
+              {p.label}
+            </Button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <CalendarDays className="size-4 text-muted-foreground" />
+
+          <Input
+            type="date"
+            value={selectedDate}
+            max={addisToday()}
+            onChange={(e) => {
+              if (!e.target.value) return;
+              setLoading(true);
+              setSelectedDate(e.target.value);
+            }}
+            className="w-auto min-w-40"
+            aria-label="Analytics end date"
+          />
+
           <Button
-            key={p.value}
-            variant={period === p.value ? "default" : "outline"}
+            variant="outline"
             size="sm"
             onClick={() => {
-              if (p.value !== period) {
-                setLoading(true);
-                setPeriod(p.value);
-              }
+              setLoading(true);
+              setSelectedDate(addisToday());
             }}
           >
-            {p.label}
+            Today
           </Button>
-        ))}
+        </div>
       </div>
 
-      {error ? (
-        <div className="py-6 text-sm text-destructive">{error}</div>
-      ) : loading ? (
+      {loading ? (
         <div className="py-6 text-sm text-muted-foreground">
           Loading analytics...
         </div>
+      ) : error ? (
+        <div className="py-6 text-sm text-destructive">{error}</div>
       ) : data ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
