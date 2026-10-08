@@ -1,416 +1,355 @@
-// @/app/admin/expenses/expenses-client.tsx
 
 "use client"
+
 import { useCallback, useEffect, useState } from "react"
-import { Plus } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react"
 import { toast } from "sonner"
-import { DataTable } from "@/components/table/data-table"
-import { expensesColumns, ETB } from "@/components/table/columns/expense-column"
-import { CalendarToggle } from "@/components/calendar-toggle"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { CalendarToggle } from "@/components/calendar-toggle"
+import { useCalendarMode } from "@/contexts/calendar-context"
+
 import {
   getExpenses,
-  getExpenseCategories,
   createExpense,
   updateExpense,
-  getExpenseSummary,
-} from "@/lib/api"
-import type {
-  Expense,
-  ExpenseCategory,
-  ExpenseSummary,
-  PaymentMethod,
-} from "@/types"
+  deleteExpense,
+} from "@/lib/api/expenses"
 
-const METHODS: PaymentMethod[] = ["cash", "transfer", "telebirr", "cbe", "other"]
+import type { Expense } from "@/types"
 
-/** Addis-local today as YYYY-MM-DD */
 function addisToday() {
-  return new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10)
-}
-function monthStart() {
-  return addisToday().slice(0, 8) + "01"
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Addis_Ababa",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date())
 }
 
-const emptyForm = {
-  description: "",
-  amount: "",
-  category_id: "",
-  expense_date: addisToday(),
-  payment_method: "cash" as PaymentMethod,
-  note: "",
+function shiftDate(date: string, offset: number) {
+  const d = new Date(`${date}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + offset)
+  return d.toISOString().slice(0, 10)
 }
+
+const money = (value: number) =>
+  new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
 
 export default function ExpensesClient() {
+  const [date, setDate] = useState(addisToday)
   const [expenses, setExpenses] = useState<Expense[]>([])
-  const [categories, setCategories] = useState<ExpenseCategory[]>([])
-  const [summary, setSummary] = useState<ExpenseSummary | null>(null)
+  const [name, setName] = useState("")
+  const [amount, setAmount] = useState("")
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const [from, setFrom] = useState(monthStart())
-  const [to, setTo] = useState(addisToday())
-  const [categoryFilter, setCategoryFilter] = useState<string>("all")
-
-  const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState<Expense | null>(null)
-  const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
-
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
-  const reload = useCallback(() => setRefreshKey((k) => k + 1), [])
 
-  useEffect(() => {
-    let active = true
-    getExpenseCategories()
-      .then((c) => {
-        if (active) setCategories(c)
-      })
-      .catch(() => {})
-    return () => {
-      active = false
-    }
+  const { formatDate } = useCalendarMode()
+
+  const reload = useCallback(() => {
+    setRefreshKey((value) => value + 1)
   }, [])
 
   useEffect(() => {
     let active = true
-    Promise.all([
-      getExpenses({
-        from,
-        to,
-        category_id: categoryFilter === "all" ? undefined : categoryFilter,
-      }),
-      getExpenseSummary(from, to),
-    ])
-      .then(([ex, sum]) => {
-        if (!active) return
-        setExpenses(ex)
-        setSummary(sum)
-        setError(null)
-      })
-      .catch((err) => {
-        if (!active) return
-        setError(err instanceof Error ? err.message : "Failed to fetch expenses")
-      })
-      .finally(() => {
+
+    async function loadExpenses() {
+      setLoading(true)
+
+      try {
+        const data = await getExpenses({
+          from: date,
+          to: date,
+        })
+
+        if (active) setExpenses(data)
+      } catch (error) {
+        if (active) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Failed to load expenses"
+          )
+        }
+      } finally {
         if (active) setLoading(false)
-      })
+      }
+    }
+
+    loadExpenses()
+
     return () => {
       active = false
     }
-  }, [from, to, categoryFilter, refreshKey])
+  }, [date, refreshKey])
 
-  function openCreate() {
-    setEditing(null)
-    setForm({ ...emptyForm, expense_date: addisToday() })
-    setOpen(true)
+  const total = expenses.reduce(
+    (sum, expense) => sum + Number(expense.amount),
+    0
+  )
+
+  function resetForm() {
+    setName("")
+    setAmount("")
+    setEditingId(null)
   }
 
-  function openEdit(expense: Expense) {
-    setEditing(expense)
-    setForm({
-      description: expense.description,
-      amount: expense.amount,
-      category_id: expense.category_id ?? "",
-      expense_date: expense.expense_date,
-      payment_method: expense.payment_method,
-      note: expense.note ?? "",
-    })
-    setOpen(true)
+  function startEditing(expense: Expense) {
+    setEditingId(expense.id)
+    setName(
+      expense.description === "Unspecified expense"
+        ? ""
+        : expense.description
+    )
+    setAmount(String(expense.amount))
   }
 
-  async function handleSave() {
-    const description = form.description.trim()
-    const amount = Number(form.amount)
+  async function saveExpense() {
+    const parsedAmount = Number(amount)
 
-    if (!description) return toast.error("Description is required")
-    if (!Number.isFinite(amount) || amount <= 0)
-      return toast.error("Amount must be greater than 0")
-
-    const payload = {
-      description,
-      amount,
-      category_id: form.category_id || null,
-      expense_date: form.expense_date,
-      payment_method: form.payment_method,
-      note: form.note.trim() || null,
+    if (
+      !amount.trim() ||
+      !Number.isFinite(parsedAmount) ||
+      parsedAmount <= 0 ||
+      !Number.isInteger(parsedAmount * 100)
+    ) {
+      toast.error("Enter a valid amount")
+      return
     }
 
     try {
       setSaving(true)
-      if (editing) {
-        await updateExpense(editing.id, payload)
+
+      const payload = {
+        description: name.trim() || "Unspecified expense",
+        amount: parsedAmount,
+        expense_date: date,
+      }
+
+      if (editingId) {
+        await updateExpense(editingId, payload)
         toast.success("Expense updated")
       } else {
         await createExpense(payload)
         toast.success("Expense added")
       }
-      setOpen(false)
-      await reload()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save expense")
+
+      resetForm()
+      reload()
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save expense"
+      )
     } finally {
       setSaving(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="py-6 text-sm text-muted-foreground">
-        Loading expenses...
-      </div>
-    )
-  }
+  async function removeExpense(id: string) {
+    if (!window.confirm("Delete this expense?")) return
 
-  if (error) {
-    return <div className="py-6 text-sm text-destructive">{error}</div>
+    try {
+      await deleteExpense(id)
+      toast.success("Expense deleted")
+      reload()
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete expense"
+      )
+    }
   }
-
-  const totals = summary?.totals
 
   return (
-    <div className="space-y-4">
-      {totals && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Revenue" value={totals.revenue} />
-          <StatCard label="Expenses" value={totals.expenses} />
-          <StatCard label="Savings" value={totals.savings} />
-          <StatCard
-            label="Available cash"
-            value={totals.available_cash}
-            emphasize
-          />
-        </div>
-      )}
+    <div className="mx-auto max-w-4xl space-y-6">
+      <Card>
+        <CardContent className="space-y-6 pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">
+                Daily Expenses
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {formatDate(date)}
+              </p>
+            </div>
+            <CalendarToggle />
+          </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="from" className="text-xs">
-            From
-          </Label>
-          <Input
-            id="from"
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="w-40"
-          />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="to" className="text-xs">
-            To
-          </Label>
-          <Input
-            id="to"
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="w-40"
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Category</Label>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setDate(shiftDate(date, -1))
+                resetForm()
+              }}
+              aria-label="Previous day"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
 
-        <div className="ml-auto flex items-center gap-2">
-          <CalendarToggle />
-          <Button onClick={openCreate}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add expense
-          </Button>
-        </div>
-      </div>
+            <Input
+              type="date"
+              value={date}
+              onChange={(e) => {
+                if (!e.target.value) return
+                setDate(e.target.value)
+                resetForm()
+              }}
+              className="flex-1"
+            />
 
-      <DataTable
-        columns={expensesColumns({ onChanged: reload, onEdit: openEdit })}
-        data={expenses}
-        filterColumn="description"
-        filterPlaceholder="Search expenses..."
-      />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setDate(shiftDate(date, 1))
+                resetForm()
+              }}
+              aria-label="Next day"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editing ? "Edit expense" : "Add expense"}
-            </DialogTitle>
-            <DialogDescription>
-              {editing
-                ? "Update this expense."
-                : "Record something you bought for the restaurant."}
-            </DialogDescription>
-          </DialogHeader>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDate(addisToday())
+                resetForm()
+              }}
+            >
+              Today
+            </Button>
+          </div>
 
-          <div className="space-y-3 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+          <div className="overflow-hidden rounded-lg border">
+            <div className="grid grid-cols-[1fr_110px_80px] gap-2 bg-muted/50 px-4 py-3 text-xs font-medium text-muted-foreground sm:grid-cols-[1fr_150px_90px]">
+              <span>Name</span>
+              <span className="text-right">Amount (ETB)</span>
+              <span className="text-right">Actions</span>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="size-5 animate-spin" />
+              </div>
+            ) : expenses.length === 0 ? (
+              <div className="p-8 text-center text-sm text-muted-foreground">
+                No expenses recorded for this date.
+              </div>
+            ) : (
+              expenses.map((expense) => (
+                <div
+                  key={expense.id}
+                  className="grid grid-cols-[1fr_110px_80px] items-center gap-2 border-t px-4 py-3 text-sm sm:grid-cols-[1fr_150px_90px]"
+                >
+                  <span className="min-w-0 truncate">
+                    {expense.description}
+                  </span>
+
+                  <span className="text-right font-medium tabular-nums">
+                    {money(Number(expense.amount))}
+                  </span>
+
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => startEditing(expense)}
+                    >
+                      Edit
+                    </Button>
+
+                    {!expense.wage_payment_id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Delete expense"
+                        onClick={() => removeExpense(expense.id)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="space-y-3 rounded-lg bg-muted/40 p-4">
+            <p className="text-sm font-medium">
+              {editingId ? "Edit expense" : "New expense"}
+            </p>
+
+            <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
               <Input
-                id="description"
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                placeholder="e.g. Onions from market"
-                autoFocus
+                placeholder="Name (optional)"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={200}
+              />
+
+              <Input
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="Amount (ETB)"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveExpense()
+                }}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (ETB)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSave()
-                  }}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={form.expense_date}
-                  onChange={(e) =>
-                    setForm({ ...form, expense_date: e.target.value })
-                  }
-                />
-              </div>
-            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={saveExpense}
+                disabled={saving || loading}
+              >
+                {saving ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <Plus className="mr-2 size-4" />
+                )}
+                {editingId ? "Save changes" : "Add expense"}
+              </Button>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select
-                  value={form.category_id || "none"}
-                  onValueChange={(v) =>
-                    setForm({ ...form, category_id: v === "none" ? "" : v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Uncategorized" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Uncategorized</SelectItem>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Payment method</Label>
-                <Select
-                  value={form.payment_method}
-                  onValueChange={(v) =>
-                    setForm({ ...form, payment_method: v as PaymentMethod })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {METHODS.map((m) => (
-                      <SelectItem key={m} value={m} className="capitalize">
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="note">Note (optional)</Label>
-              <Textarea
-                id="note"
-                value={form.note}
-                onChange={(e) => setForm({ ...form, note: e.target.value })}
-                rows={2}
-              />
+              {editingId && (
+                <Button variant="outline" onClick={resetForm}>
+                  Cancel
+                </Button>
+              )}
             </div>
           </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : editing ? "Save" : "Add"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div className="flex items-center justify-between border-t pt-5">
+            <span className="font-medium">
+              Total for selected date
+            </span>
+            <span className="text-xl font-semibold tabular-nums">
+              {money(total)} ETB
+            </span>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  )
-}
-
-function StatCard({
-  label,
-  value,
-  emphasize,
-}: {
-  label: string
-  value: string
-  emphasize?: boolean
-}) {
-  const n = Number(value)
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div
-          className={`mt-1 text-2xl font-semibold tabular-nums ${
-            emphasize && n < 0 ? "text-destructive" : ""
-          }`}
-        >
-          {ETB.format(n)}
-        </div>
-      </CardContent>
-    </Card>
   )
 }

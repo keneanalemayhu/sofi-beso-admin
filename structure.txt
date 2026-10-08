@@ -1,0 +1,119 @@
+sofi-beso-admin/
+├── public/
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── src/
+│   ├── app/
+│   │   ├── admin/
+│   │   │   ├── categories/
+│   │   │   │   ├── categories-table-client.tsx
+│   │   │   │   ├── layout.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── expenses/
+│   │   │   │   ├── expenses-client.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── items/
+│   │   │   │   ├── item-form-dialog.tsx
+│   │   │   │   ├── items-table-client.tsx
+│   │   │   │   ├── layout.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── orders/
+│   │   │   │   ├── layout.tsx
+│   │   │   │   ├── orders-table-client.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── staff/
+│   │   │   │   ├── layout.tsx
+│   │   │   │   ├── page.tsx
+│   │   │   │   └── staff-client.tsx
+│   │   │   ├── dashboard-client.tsx
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── providers.tsx
+│   ├── components/
+│   │   ├── common/
+│   │   │   └── Header.tsx
+│   │   ├── table/
+│   │   │   ├── columns/
+│   │   │   │   ├── category-column.tsx
+│   │   │   │   ├── expense-column.tsx
+│   │   │   │   ├── item-column.tsx
+│   │   │   │   ├── order-column.tsx
+│   │   │   │   ├── staff-column.tsx
+│   │   │   │   └── waiter-column.tsx
+│   │   │   ├── data-table-pagination.tsx
+│   │   │   ├── data-table-toolbar.tsx
+│   │   │   └── data-table.tsx
+│   │   ├── ui/
+│   │   │   ├── alert-dialog.tsx
+│   │   │   ├── badge.tsx
+│   │   │   ├── breadcrumb.tsx
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── checkbox.tsx
+│   │   │   ├── dialog.tsx
+│   │   │   ├── dropdown-menu.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── label.tsx
+│   │   │   ├── select.tsx
+│   │   │   ├── separator.tsx
+│   │   │   ├── sheet.tsx
+│   │   │   ├── sidebar.tsx
+│   │   │   ├── skeleton.tsx
+│   │   │   ├── sonner.tsx
+│   │   │   ├── switch.tsx
+│   │   │   ├── table.tsx
+│   │   │   ├── textarea.tsx
+│   │   │   └── tooltip.tsx
+│   │   ├── app-sidebar.tsx
+│   │   ├── calendar-toggle.tsx
+│   │   ├── export-csv-dialog.tsx
+│   │   ├── nav-main.tsx
+│   │   └── site-header.tsx
+│   ├── contexts/
+│   │   └── calendar-context.tsx
+│   ├── hooks/
+│   │   ├── use-mobile.ts
+│   │   └── useCalendar.ts
+│   ├── lib/
+│   │   ├── api/
+│   │   │   ├── analytics.ts
+│   │   │   ├── categories.ts
+│   │   │   ├── client.ts
+│   │   │   ├── expenses.ts
+│   │   │   ├── index.ts
+│   │   │   ├── items.ts
+│   │   │   ├── orders.ts
+│   │   │   ├── staff.ts
+│   │   │   └── wages.ts
+│   │   ├── config.ts
+│   │   ├── csv.ts
+│   │   └── utils.ts
+│   └── types/
+│       ├── analytics.ts
+│       ├── categories.ts
+│       ├── expense.ts
+│       ├── index.ts
+│       ├── items.ts
+│       ├── orders.ts
+│       ├── staff.ts
+│       └── wage.ts
+├── .env.local
+├── .gitignore
+├── AGENTS.md
+├── Caddyfile
+├── CLAUDE.md
+├── components.json
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.ts
+├── package.json
+├── postcss.config.mjs
+├── README.md
+└── tsconfig.json

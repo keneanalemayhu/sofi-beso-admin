@@ -1,9 +1,9 @@
 // @/components/app-sidebar.tsx
 
-"use client"
-import * as React from "react"
-import Link from "next/link"
-import { NavMain } from "@/components/nav-main"
+"use client";
+import * as React from "react";
+import Link from "next/link";
+import { NavMain } from "@/components/nav-main";
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +14,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 import {
   LayoutDashboardIcon,
   UtensilsCrossed,
@@ -23,8 +23,9 @@ import {
   Users,
   Wallet,
   PiggyBank,
-} from "lucide-react"
-import { IconSquareLetterS } from "@tabler/icons-react"
+  ClipboardCheck,
+} from "lucide-react";
+import { IconSquareLetterS } from "@tabler/icons-react";
 
 const data = {
   navSections: [
@@ -72,6 +73,11 @@ const data = {
       title: "Finance",
       items: [
         {
+          title: "Daily ሂሳብ",
+          url: "/admin/settlements",
+          icon: <ClipboardCheck />,
+        },
+        {
           title: "Expenses",
           url: "/admin/expenses",
           icon: <Wallet />,
@@ -84,7 +90,7 @@ const data = {
       ],
     },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -123,5 +129,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
