@@ -1,6 +1,7 @@
 // @/types/orders.ts
 
-export type OrderStatus = "pending" | "completed" | "voided"
+/** An order is completed when placed; the only change after that is voiding. */
+export type OrderStatus = "completed" | "voided"
 
 export type Order = {
   id: string
