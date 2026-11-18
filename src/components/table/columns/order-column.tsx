@@ -23,16 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { updateOrderStatus } from "@/lib/api"
 import { useCalendar } from "@/hooks/useCalendar"
 import type { OrderWithItems, OrderStatus } from "@/types"
@@ -42,10 +32,10 @@ function formatMoney(v: string) {
   return Number.isFinite(n) ? n.toFixed(2) : v
 }
 
+// An order is completed when it is placed; the only change after that is voiding.
 function StatusBadge({ status }: { status: OrderStatus }) {
-  if (status === "completed") return <Badge variant="outline">Completed</Badge>
   if (status === "voided") return <Badge variant="destructive">Voided</Badge>
-  return <Badge variant="secondary">Pending</Badge>
+  return <Badge variant="outline">Completed</Badge>
 }
 
 function CreatedAtCell({ value }: { value: string }) {
@@ -65,26 +55,11 @@ function OrderActions({
   onChanged: () => void
 }) {
   const { order } = row
-  const [openComplete, setOpenComplete] = useState(false)
   const [openVoid, setOpenVoid] = useState(false)
   const [reason, setReason] = useState("")
   const [saving, setSaving] = useState(false)
 
-  const isPending = order.status === "pending"
-
-  async function handleComplete() {
-    try {
-      setSaving(true)
-      await updateOrderStatus(order.id, { status: "completed" })
-      toast.success("Order completed")
-      setOpenComplete(false)
-      onChanged()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update order")
-    } finally {
-      setSaving(false)
-    }
-  }
+  const canVoid = order.status !== "voided"
 
   async function handleVoid() {
     try {
@@ -104,7 +79,7 @@ function OrderActions({
     }
   }
 
-  if (!isPending) {
+  if (!canVoid) {
     return <span className="text-muted-foreground">—</span>
   }
 
@@ -118,9 +93,6 @@ function OrderActions({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setOpenComplete(true)}>
-            Mark completed
-          </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onClick={() => {
@@ -132,24 +104,6 @@ function OrderActions({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <AlertDialog open={openComplete} onOpenChange={setOpenComplete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Mark order completed?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This marks order #{order.order_number} as completed. Completed
-              orders cannot be changed afterward.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleComplete} disabled={saving}>
-              {saving ? "Saving..." : "Complete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <Dialog open={openVoid} onOpenChange={setOpenVoid}>
         <DialogContent>
